@@ -422,7 +422,7 @@ def callback_menu(call):
             btn_back = types.InlineKeyboardButton("Вернуться в меню", callback_data="back_to_main_menu")
             markup.add(btn_order, btn_back)
 
-            bot.send_message(chat_id, "Выберите действие:", reply_markup=markup, parse_mode="Markdown")
+            bot.send_message(chat_id, "*Выберите действие:*", reply_markup=markup, parse_mode="Markdown")
 
         except FileNotFoundError as e:
             logging.error(f"Файл меню не найден: {e}")
@@ -431,7 +431,16 @@ def callback_menu(call):
             logging.error(f"Ошибка отправки меню: {e}")
             bot.send_message(chat_id, "Меню временно недоступно. Попробуйте позже.")
 
-
+    # 3 попытки при плохом соединении
+    for attempt in range(3):
+        try:
+            send_menu_safe()
+            break
+        except:
+            if attempt < 2:
+                time.sleep(2)
+            else:
+                bot.send_message(chat_id, "Не удалось загрузить меню из-за проблем с сетью. Попробуйте позже.")
 @bot.callback_query_handler(func=lambda call: call.data == "back_to_main_menu")
 def callback_back_to_main_menu(call):
     bot.answer_callback_query(call.id)
@@ -1594,5 +1603,4 @@ if __name__ == '__main__':
             bot.send_message(ADMIN_CHAT_ID, f"🚨 Бот упал! Ошибка:\n{e}\nПерезапуск через 5 сек...")
             time.sleep(5)  # Пауза перед рестартом
             logging.info("Перезапуск polling...")
-
             continue  # Снова в цикл
